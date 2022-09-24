@@ -1,117 +1,272 @@
 // TODO: remove and replace this file header comment
-// This is a .cpp file you will edit and turn in.
+// This is a .h file you will edit and turn in.
 
 // Remove starter comments and add your own
 // comments on each function and on complex code sections.
 
+#pragma once
+
+#include <cctype>
+#include <fstream>
 #include <iostream>
-#include "search.h"
+#include <map>
+#include <set>
+#include <sstream>
+#include <stdio.h>
+#include <string>
 using namespace std;
 
+
 template <typename t>
-void displaySet(t print){
+void displayResult(t print){
 	for(auto& obj : print)
-		cout << obj << " ";
+		cout << obj << endl;
 }
 
-void displayMap(map<string, set<string>>& print){
-	map<string, set<string>>::iterator it;
-
-	for(it = print.begin(); it != print.end(); it++){
-		cout << "\n\nFile: " << it->first << flush << "\nBody:\n" << flush;
-		displaySet(it->second);
-		cout << endl;
+string convertLower(string line){
+	string lower;
+	for(auto& ch : line){
+		lower += tolower(ch);
 	}
+	return lower;
 }
 
-void testCleanToken(){
-	string t1 = "...this is a, line! there are a pluthera of comma's, periods & puncuation through these lines that you're consuming..., hugh, ,";
+/*
+@param:
+s: string of the token to be "cleaned' have returned
 
-	string t2 = ",)9We're wanting to see if they're capable, if they're worthy, can they complete the tast. Parse out all of the in correct, and unjust.";
+Takes in a string, verifys it has letters
 
-	string t3 = "Whilst keeping the integradey of the interanl structure?";
+Trims leading & trailing puncuation
 
-	string t4 = "Wisconsin Lutheran College opened in the fall of 1973 with a part-time faculty and two dozen students. The school had its first full-time president two years later. In 1977 the school purchased five buildings on an 8.5-acre (3.4 ha) campus, and had a set of plans that allowed for growth and development. In 1982, the college purchased the academic library from Milton College. Volunteers moved and installed this 60,000 volume library. In 1983, the college purchased and installed the science laboratory furnishings of the University of Wisconsin Center at Medford. These major additions helped the college pursue its dream of becoming a four-year college.";
+Converts to lower case
 
-	cout << "Clean 1: \n" << cleanToken(t1) << endl << endl;
+@return tempS:  trimmed string
+*/
+string cleanToken(string s) {
+	int sSize = s.size(); // Size of string
+	bool alpha = false;   // Check for if s contains letter
 
-	cout << "Clean 2: \n" << cleanToken(t2) << endl << endl;
+	/**If this comes up again, create helper function**/
+	for(auto& ch : s){ // First checks if any letters are contained
+		if(isalpha(ch)){
+			alpha = true;
+			break;
+		}
+	}
 
-	cout << "Clean 3: \n" << cleanToken(t3) << endl << endl;
+	if(sSize == 0 || alpha != true)
+		return ""; //
 
-	cout << "Clean 4: \n" << cleanToken(t4) << endl << endl;
+	 // if(!alpha)//No letters found in s -> alpha = false
+	 // return "";
+
+	int letterIndex = 0; // Index of first letter occurance
+	for(char& ch : s){
+		if(ispunct(ch)){
+			letterIndex++;
+			// cout << "String: " << s << " : " << ch << " : " << letterIndex << endl;
+		} else
+			break;
+	}
+
+	string tempS;
+	tempS = s.substr(letterIndex, sSize);
+
+	sSize = tempS.size(); // Size of parsed string
+	letterIndex = sSize;  // End of tempS
+	for(int k = sSize - 1; k > 0; k--){
+		if(ispunct(tempS[k]) || tempS[k] == ' '){
+			letterIndex--;
+		} else
+			break;
+	}
+
+	if(letterIndex != sSize)               // Trim trail punc
+		tempS = tempS.substr(0, letterIndex); //?? Make sure it's not cutting short
+
+	 /**If this comes up again create helper function**/
+	 //?? make sure it's proplery addressing the memory location to lowercase
+	for(auto& ch : tempS) // Converts to lower case
+		ch = tolower(ch);
+
+	return tempS;
+}
+
+/*
+@param:'
+text: string containg entire body from a single web page
+
+Gets passed the entire body of a webpage
+
+
+return set<string>:
+*/
+set<string> gatherTokens(string text) {
+	set<string> tokens; // Holds the cleaned body of text
+	stringstream ss(text);
+	string cleaned, token;
+	int tSize = text.size();
+
+	if(tSize == 0){
+		cout << "Empty body" << endl;
+	} else{
+		while(getline(ss, token, ' ')){
+			cleaned = cleanToken(token);
+
+			tokens.insert(cleaned);
+		}
+	}
+
+	return tokens;
 }
 
 /**
- * @brief Needs a more indepth testing
- *
- * @param file: passed file name
+ * @brief opens a file,
+ * @param readIn (PBR)
+ */
+void openFile(string const file, ifstream& readIn) {
+	readIn.open(file);
+
+	if(readIn.is_open())
+		cout << "Opened: " << file << endl;
+	else
+		cout << "Failed to open: " << file << endl;
+}
+
+/**
+ * @brief
+ * @param filename: name of  database file
+ * @param index: (PBR) Map to be populated with inverted data
+ * @return count of processed webpages that were ADD to the index
+ */
+int buildIndex(string filename, map<string, set<string>>& index) {
+	int inserts = 0; // Number of unique inserts into map ??
+	int lineCount = 1;
+	string body, bodyToken, file, token;
+	ifstream readIn;
+
+	openFile(filename, readIn); // File is now opened
+
+	while(getline(readIn, token)){ // Loop through file line-by-line
+		if(lineCount % 2 != 0){      // Odd file line
+			file = token;
+			index[file];
+			inserts++;
+		} else{
+			index[file] = gatherTokens(token);
+			file.clear(); // Set empty, because end of pairing for (filename, body)
+		}
+		lineCount++;
+	}
+	readIn.close();
+	return inserts;
+}
+
+/*
+Helper function
 */
-void testGatherToken(string file){
-	set<string> cleanToken;
-	fstream readin;
-	string tmpToken, token;
+void searchParameters(set<string>& include, set<string>& exclude, string sentence){
+	string token;
+	char condition = '+';//Default adds to include
+	stringstream ss(sentence);
 
-	readin.open(file);
-
-	if(!readin.is_open())
-		cout << "Bad file read in.\n" << flush;
-
-	while(getline(readin, tmpToken)){
-		if(!readin.good()){
-			cout << "Bad read in\n" << flush;
-			continue;
+	while(getline(ss, token, ' ')){//Everything in between spaces
+		//cout << "Token: " << token << endl;
+		if(token[0] == '+'){//Else there is no condition change
+			condition = '+';
+			token.erase(0, 1);//Trim condition
+		} else if(token[0] == '-'){
+			condition = '-';
+			token.erase(0, 1);
 		}
-		token += " ";
-		token += tmpToken;
+		token = convertLower(token);
+
+		//Inserts token based on search condition status
+		if(condition == '+')
+			include.insert(token);
+		else if(condition == '-')
+			exclude.insert(token);
+		//cout << "Token Cleaned: " << token << endl;
 	}
+}
 
-	cleanToken = gatherTokens(token);
+/**
+ * @brief Collects all url's that contain matching words
+ * @param index 
+ * @param include 
+*/
+void searchIncludes(map<string, set<string>>& index, set<string>& include, set<string>& result){
+	for(auto& term : include){//Itterate through search terms
+		for(auto& site : index){//Loops through all urls checking for term
+			if(site.second.count(term))
+				result.insert(site.first);
+		}
+	}
+}
 
-	displaySet(cleanToken);
+/**
+ * @brief Loops through results, removing any urls that contain excluded terms
+ * @param exclude 
+ * @param result 
+*/
+void removeExcludes(map<string, set<string>>& index, set<string>& exclude, set<string>& result){
+	set<string> results;
+	for(auto& term : exclude){//Itterate through exclude terms
+		for(auto& site : result){//Itterate through collected site
+			if(index[site].count(term) == 0){//Exclude term not found
+				results.emplace(site);//Include in return results
+			}
+		}
+	}
+	if(results.size() != 0)
+		result = results;
+}
+
+set<string> findQueryMatches(map<string, set<string>>& index, string sentence) {
+	set<string>  result, include, exclude;
+
+	searchParameters(include, exclude, sentence);//Parses out the search parameters
+	searchIncludes(index, include, result);
+	removeExcludes(index, exclude, result);
+
+	return result;
+}
+
+void run(map<string, set<string>>& index, string file){
+	int inserts = buildIndex(file, index);
+	cout << "Stand by while building index..." << endl;
+	cout << "Indexed " << inserts << " pages containing xxxx unique terms\n" << flush;
 
 }
 
-
-
-void testReverseIndex(string file){
+// TODO: Add a function header comment here to explain the
+// behavior of the function and how you implemented this behavior
+void searchEngine(string filename) {
 	map<string, set<string>> index;
-	int inserts;
+	set<string> pages;
+	string input;
 
-	inserts = buildIndex(file, index);
+	run(index, filename);
 
-	displayMap(index);
-	cout << "\n\nInserts: " << inserts << endl;
-}
+	do{
+		cout << "Enter query sentence(press enter to quit): ";
+		getline(cin, input);
 
-int main() {
-	string loop;
-	cin >> loop;
+		pages = findQueryMatches(index, input);
 
-	string file;
-	while(loop != "#"){
+		displayResult(pages);
+	} while(input != " ");
+	//Constructs inverted index (see main)
+	
+	//Captures inserts (see main)
+	//tally unique words from all
+		//ITT index, count size of secnd
+			//Function call, count index.second.size();
 
-		if(loop == "ct"){
-			cout << "----------Clean Token----------" << endl;
-			testCleanToken();
-		}
-		
-		if(loop == "gt"){
-			cout << "\n----------Gather Token----------" << endl;
-			cout << "Enter file: ";
-			cin >> file;
-			cout << endl;
-			testGatherToken(file);
-		}
-		
-		if(loop == "ri"){
-			 	cout << "\n\n----------Inverted Index----------" << endl;
-			 	cout << "Enter file: ";
-			 	cin >> file;
-			 	cout << endl;
-			 	testReverseIndex(file);
-		}
-		cin >> loop;
-	}
-	return 0;
+	//Loop to query pages (see main)
+		//" " ends
+	
+
+	// TODO:  Write this function.
 }

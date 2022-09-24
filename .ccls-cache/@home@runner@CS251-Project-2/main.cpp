@@ -67,15 +67,14 @@ void testGatherToken(string file){
 	}
 
 	cleanToken = gatherTokens(token);
-
+	cout << "Token Size: " << cleanToken.size() << endl;
 	displaySet(cleanToken);
 
 }
 
 
 
-void testReverseIndex(string file){
-	map<string, set<string>> index;
+void testReverseIndex(map<string, set<string>>& index, string file){
 	int inserts;
 
 	inserts = buildIndex(file, index);
@@ -84,9 +83,20 @@ void testReverseIndex(string file){
 	cout << "\n\nInserts: " << inserts << endl;
 }
 
+void testSearch(map<string, set<string>>& index){
+	string in;
+	cout << "Enter tight search parameters\n";
+	cin.clear();
+	getline(cin, in);
+
+	findQueryMatches(index, in);
+}
+
 int main() {
+	map<string, set<string>> index;
 	string loop;
-	cin >> loop;
+	// cin >> loop;
+	getline(cin, loop);
 
 	string file;
 	while(loop != "#"){
@@ -109,9 +119,14 @@ int main() {
 			 	cout << "Enter file: ";
 			 	cin >> file;
 			 	cout << endl;
-			 	testReverseIndex(file);
+			 	testReverseIndex(index, file);
 		}
-		cin >> loop;
+
+		if(loop == "s"){
+			testSearch(index);
+		}
+		// cin >> loop;
+		getline(cin, loop);
 	}
 	return 0;
 }

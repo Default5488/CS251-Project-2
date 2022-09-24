@@ -16,6 +16,14 @@
 #include <string>
 using namespace std;
 
+string convertLower(string line){
+	string lower;
+	for(auto& ch : line){
+		lower += tolower(ch);
+	}
+	return lower;
+}
+
 /*
 @param:
 s: string of the token to be "cleaned' have returned
@@ -148,25 +156,49 @@ int buildIndex(string filename, map<string, set<string>> &index) {
   return inserts;
 }
 
-// TODO: Add a function header comment here to explain the
-// behavior of the function and how you implemented this behavior
+/*
+Helper function
+*/
+void searchParameters(set<string>& include, set<string>& exclude, string sentence){
+	string token;
+	char condition = '+';//Default adds to include
+	stringstream ss(sentence);
+	
+	while(getline(ss, token, ' ')){//Everything in between spaces
+		cout << "Token: " << token << endl;
+		if(token[0] == '+'){//Else there is no condition change
+			condition = '+';
+			token.erase(0, 1);//Trim condition
+		}else if(token[0] == '-'){
+			condition = '-';
+			token.erase(0, 1);
+		}
+		token = convertLower(token);
+		
+		//Inserts token based on search condition status
+		if(condition == '+')
+			include.insert(token);
+		else if(condition == '-')
+			exclude.insert(token);
+		cout << "Token Cleaned: " << token << endl;
+	}
+}
+
+
 set<string> findQueryMatches(map<string, set<string>> &index, string sentence) {
-  set<string> result;
+  set<string> result, include, exclude;
 
-  // Pass sentence to a cleaner function, (PBR) vector of search condition &
-  // ignore conditions Store into a set of the webpage -> Holds string of
-  // matching sites
+	searchParameters(include, exclude, sentence);//Parses out the search parameters
 
-  // 1st:
-  // Run through collection variables, regardless of ignores add to set
-  // Than if exclude conditions are meet, reloop checking for exclude conditions
-  // If met remove the site from the set
-
-  // 2nd:
-  // If include is found
-  // loop through and check for exclude,
-  // exclude found continue to next file check
-  // else add url to results set
+	//Results collects all with included terms
+	//Filter through results for any excluded terms
+	//remove if found
+	//return set
+	
+  //Results holds url
+	for(auto& site : index){
+		
+	}
 
   return result; // TODO:  update this.
 }
