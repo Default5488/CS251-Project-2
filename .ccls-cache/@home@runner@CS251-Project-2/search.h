@@ -40,7 +40,7 @@ string cleanToken(string s) {
     }
   }
 
-  if (sSize == 0)
+  if (sSize == 0 || alpha != true)
     return ""; //
 
   // if(!alpha)//No letters found in s -> alpha = false
